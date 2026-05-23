@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ask Me Anything 💬</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ig1: #f09433; --ig2: #e6683c; --ig3: #dc2743; --ig4: #cc2366; --ig5: #bc1888;
+    --grad: linear-gradient(45deg, var(--ig1), var(--ig2), var(--ig3), var(--ig4), var(--ig5));
+    --grad2: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+    --bg: #fafafa; --text: #262626; --sub: #8e8e8e; --border: #dbdbdb; --card: #fff; --radius: 20px;
+    --shadow: 0 4px 32px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+
+  .topbar { width: 100%; max-width: 480px; padding: 16px 20px 0; display: flex; align-items: center; justify-content: center; position: sticky; top: 0; z-index: 10; background: rgba(250,250,250,0.88); backdrop-filter: blur(10px); }
+  .logo { font-family: 'Pacifico', cursive; font-size: 1.6rem; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .container { width: 100%; max-width: 480px; padding: 20px 16px 60px; display: flex; flex-direction: column; gap: 18px; }
+
+  .profile-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 28px 24px 22px; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: var(--shadow); animation: slideUp .5s cubic-bezier(.22,1,.36,1) both; }
+  .avatar-ring { width: 88px; height: 88px; border-radius: 50%; padding: 3px; background: var(--grad); }
+  .avatar-inner { width: 100%; height: 100%; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 2.4rem; border: 3px solid #fff; }
+  .profile-name { font-weight: 700; font-size: 1.15rem; color: var(--text); }
+  .profile-sub { font-size: .85rem; color: var(--sub); text-align: center; line-height: 1.4; }
+
+  .send-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 22px 20px 18px; box-shadow: var(--shadow); animation: slideUp .55s .08s cubic-bezier(.22,1,.36,1) both; }
+  .send-label { font-size: .8rem; font-weight: 600; color: var(--sub); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 12px; }
+
+  .message-wrap { position: relative; border-radius: 14px; border: 1.5px solid var(--border); transition: border-color .2s; background: #fff; overflow: hidden; }
+  .message-wrap:focus-within { box-shadow: 0 0 0 2px #bc1888aa; border-color: transparent; }
+  textarea { width: 100%; min-height: 120px; padding: 14px; font-family: 'DM Sans', sans-serif; font-size: .97rem; color: var(--text); background: transparent; border: none; outline: none; resize: none; line-height: 1.55; }
+  textarea::placeholder { color: #b0b0b0; }
+  .char-count { text-align: right; font-size: .74rem; color: var(--sub); padding: 0 14px 10px; }
+  .char-count.warn { color: var(--ig3); }
+
+  .send-btn { margin-top: 14px; width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--grad2); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity .2s, transform .15s; }
+  .send-btn:hover { opacity: .92; transform: translateY(-1px); }
+  .send-btn:active { transform: scale(.98); }
+  .send-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .send-btn .btn-text { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .send-btn .spinner { display: none; width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; margin: auto; }
+  .send-btn.loading .btn-text { display: none; }
+  .send-btn.loading .spinner { display: block; }
+
+  /* ── SUCCESS ── */
+  .success-card { display: none; background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 34px 22px 26px; box-shadow: var(--shadow); text-align: center; flex-direction: column; align-items: center; gap: 14px; }
+  .success-card.show { display: flex; animation: popIn .4s cubic-bezier(.34,1.56,.64,1) both; }
+  .checkmark { width: 70px; height: 70px; border-radius: 50%; background: var(--grad); display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 4px 20px rgba(188,24,136,.3); }
+  .success-title { font-family: 'Pacifico', cursive; font-size: 1.4rem; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .success-sub { font-size: .88rem; color: var(--sub); line-height: 1.55; max-width: 300px; }
+  .tg-badge { display: flex; align-items: center; gap: 10px; background: #e8f4fd; border: 1px solid #bee3f8; border-radius: 12px; padding: 12px 16px; width: 100%; }
+  .tg-icon { font-size: 1.5rem; }
+  .tg-text { font-size: .85rem; color: #2b6cb0; font-weight: 500; text-align: left; line-height: 1.4; }
+  .another-btn { background: transparent; border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 0; width: 100%; font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 600; color: var(--sub); cursor: pointer; transition: background .15s; }
+  .another-btn:hover { background: #f5f5f5; }
+
+  /* ── ERROR ── */
+  .error-msg { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 10px; padding: 10px 14px; color: #c53030; font-size: .85rem; display: none; margin-top: 10px; }
+  .error-msg.show { display: block; }
+
+  /* ── HOW IT WORKS ── */
+  .tips-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 18px 20px; box-shadow: var(--shadow); animation: slideUp .6s .14s cubic-bezier(.22,1,.36,1) both; }
+  .tips-title { font-size: .78rem; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+  .tip { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; }
+  .tip-icon { font-size: 1.1rem; flex-shrink: 0; }
+  .tip-text { font-size: .85rem; color: var(--text); line-height: 1.45; }
+
+  .footer { font-size: .75rem; color: var(--sub); text-align: center; padding: 4px 0; }
+  .footer span { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600; }
+
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: #262626; color: #fff; padding: 10px 22px; border-radius: 50px; font-size: .85rem; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 100; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @keyframes slideUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">askme ✨</div>
+</div>
+
+<div class="container">
+
+  <!-- Profile -->
+  <div class="profile-card">
+    <div class="avatar-ring">
+      <div class="avatar-inner">🌟</div>
+    </div>
+    <div class="profile-name">Your Name</div>
+    <div class="profile-sub">Send me an anonymous message —<br>I read every single one 💌</div>
+  </div>
+
+  <!-- Send Form -->
+  <div class="send-card" id="sendCard">
+    <div class="send-label">Your anonymous message</div>
+    <div class="message-wrap">
+      <textarea id="msgInput" maxlength="300" placeholder="Write something honest, kind, or fun… 😄"></textarea>
+      <div class="char-count" id="charCount">0 / 300</div>
+    </div>
+    <div class="error-msg" id="errorMsg">❌ Something went wrong. Please try again.</div>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+      <div class="btn-text">✈️ &nbsp;Send Anonymously</div>
+      <div class="spinner"></div>
+    </button>
+  </div>
+
+  <!-- Success -->
+  <div class="success-card" id="successCard">
+    <div class="checkmark">✓</div>
+    <div class="success-title">Message Sent!</div>
+    <div class="success-sub">Your anonymous message was delivered. The owner will see it on Telegram shortly!</div>
+    <div class="tg-badge">
+      <div class="tg-icon">📨</div>
+      <div class="tg-text">Message forwarded to Telegram bot &amp; saved in database.</div>
+    </div>
+    <button class="another-btn" onclick="resetForm()">Send another message →</button>
+  </div>
+
+  <!-- How it works -->
+  <div class="tips-card">
+    <div class="tips-title">How it works</div>
+    <div class="tip"><div class="tip-icon">🔒</div><div class="tip-text">Messages are completely anonymous — your identity is never revealed.</div></div>
+    <div class="tip"><div class="tip-icon">💌</div><div class="tip-text">Messages are saved securely and instantly forwarded to Telegram.</div></div>
+    <div class="tip"><div class="tip-icon">🗄️</div><div class="tip-text">Every message is stored in a private database for safekeeping.</div></div>
+  </div>
+
+  <div class="footer">Made with ❤️ · <span>askme</span> · 100% anonymous</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // 🔧 Replace with your deployed backend URL
+  const API_URL = 'https://your-backend-url.com/api/message';
+
+  const input    = document.getElementById('msgInput');
+  const counter  = document.getElementById('charCount');
+  const sendBtn  = document.getElementById('sendBtn');
+  const sendCard = document.getElementById('sendCard');
+  const successCard = document.getElementById('successCard');
+  const errorMsg = document.getElementById('errorMsg');
+
+  input.addEventListener('input', () => {
+    const len = input.value.length;
+    counter.textContent = `${len} / 300`;
+    counter.classList.toggle('warn', len > 260);
+    errorMsg.classList.remove('show');
+  });
+
+  async function sendMessage() {
+    const msg = input.value.trim();
+    if (!msg) { showToast('Please write a message first 😊'); return; }
+
+    sendBtn.disabled = true;
+    sendBtn.classList.add('loading');
+    errorMsg.classList.remove('show');
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        sendCard.style.display = 'none';
+        successCard.classList.add('show');
+        showToast('Message sent! 🎉');
+      } else {
+        errorMsg.textContent = '❌ ' + (data.error || 'Something went wrong.');
+        errorMsg.classList.add('show');
+      }
+    } catch (err) {
+      errorMsg.textContent = '❌ Could not connect to server. Please try again.';
+      errorMsg.classList.add('show');
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.classList.remove('loading');
+    }
+  }
+
+  function resetForm() {
+    successCard.classList.remove('show');
+    sendCard.style.display = '';
+    input.value = '';
+    counter.textContent = '0 / 300';
+    counter.classList.remove('warn');
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+</script>
+</body>
+</html>
