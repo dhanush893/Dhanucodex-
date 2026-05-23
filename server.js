@@ -5,7 +5,16 @@ const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...ar
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+
+// ── CORS — allow all origins ──
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
 app.use(express.json());
 
 // ── MongoDB Connection ──
@@ -26,17 +35,19 @@ async function sendToTelegram(text) {
   const TOKEN   = process.env.TELEGRAM_BOT_TOKEN;
   const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
   const url = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
-  const body = {
-    chat_id:    CHAT_ID,
-    text:       `💌 *New Anonymous Message*\n\n${text}`,
-    parse_mode: 'Markdown',
-  };
   const res = await fetch(url, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(body),
+    body: JSON.stringify({
+      chat_id:    CHAT_ID,
+      text:       `💌 *New Anonymous Message*\n\n${text}`,
+      parse_mode: 'Markdown',
+    }),
   });
-  return res.json();
+  const data = await res.json();
+  if (!data.ok) console.error('❌ Telegram error:', data);
+  else console.log('✅ Telegram sent');
+  return data;
 }
 
 // ── POST /api/message ──
@@ -50,31 +61,26 @@ app.post('/api/message', async (req, res) => {
     if (message.length > 300)
       return res.status(400).json({ error: 'Message too long (max 300 chars).' });
 
-    // Save to MongoDB
+    // Save to MongoDB first
     const doc = await Message.create({
       message: message.trim(),
       ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
     });
 
-    // Forward to Telegram
-    const tgResult = await sendToTelegram(message.trim());
-    if (!tgResult.ok) {
-      console.error('Telegram error:', tgResult);
-    }
+    // Send to Telegram (non-blocking — won't fail the response)
+    sendToTelegram(message.trim()).catch(console.error);
 
     return res.status(200).json({ success: true, id: doc._id });
   } catch (err) {
-    console.error(err);
+    console.error('❌ Server error:', err);
     return res.status(500).json({ error: 'Something went wrong. Try again.' });
   }
 });
 
-// ── GET /api/messages (optional admin view) ──
+// ── GET /api/messages (admin) ──
 app.get('/api/messages', async (req, res) => {
-  const secret = req.query.secret;
-  if (secret !== process.env.ADMIN_SECRET)
+  if (req.query.secret !== process.env.ADMIN_SECRET)
     return res.status(401).json({ error: 'Unauthorized' });
-
   const messages = await Message.find().sort({ sentAt: -1 }).limit(100);
   res.json(messages);
 });
@@ -84,4 +90,3 @@ app.get('/', (req, res) => res.send('🚀 AskMe backend is running!'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
